@@ -1,0 +1,64 @@
+-- Egg Randomizer with Visual Toggle + ESP + UI Buttons for Grow a Garden (Roblox) -- Place this LocalScript in StarterPlayerScripts
+
+local RunService = game:GetService("RunService") local Players = game:GetService("Players") local eggsFolder = workspace:WaitForChild("Eggs") local player = Players.LocalPlayer local playerGui = player:WaitForChild("PlayerGui")
+
+local petEggMap = { ["Common Egg"] = {"Dog", "Golden Lab", "Bunny"}, ["Uncommon Egg"] = {"Black Bunny", "Chicken", "Cat", "Deer"}, ["Rare Egg"] = {"Orange Tabby", "Spotted Deer", "Pig", "Rooster", "Monkey"}, ["Legendary Egg"] = {"Cow", "Silver Monkey", "Sea Otter", "Turtle", "Polar Bear"}, ["Mythical Egg"] = {"Grey Mouse", "Brown Mouse", "Squirrel", "Red Giant Ant", "Red Fox"}, ["Bug Egg"] = {"Snail", "Giant Ant", "Caterpillar", "Praying Mantis", "Dragonfly"}, ["Common Summer Egg"] = {"Starfish", "Seagull", "Crab"}, ["Rare Summer Egg"] = {"Flamingo", "Toucan", "Sea Turtle", "Orangutan", "Seal"}, ["Paradise Egg"] = {"Ostrich", "Peacock", "Capybara", "Scarlet Macaw", "Mimic Octopus"}, ["Dinosaur Egg"] = {"T-Rex", "Triceratops", "Velociraptor", "Pterodactyl"}, ["Primal Egg"] = {"Spinosaurus", "Ankylosaurus", "Dilophosaurus"}, ["Anti Bee Egg"] = {"Disco Bee", "Butterfly", "Moth", "Tarantula Hawk", "Wasp"}, ["Zen Egg"] = {"Shiba Inu", "Nihonzaru", "Tanuki", "Tanchozuru", "Kappa", "Kitsune"}, ["Bee Egg"] = {"Worker Bee", "Queen Bee", "Drone Bee"}, ["Night Egg"] = {"Night Owl", "Blood Owl", "Midnight Moth", "Mole", "Frog", "Echo Frog", "Raccoon"}, ["Oasis Egg"] = {"Fennec Fox", "Snake", "Hyacinth Macaw", "Camel", "Meerkat", "Axolotl"} }
+
+local eggToggles = {} local espEnabled = true
+
+-- ESP + Click Toggle Setup local function createESP(egg) local espGui = Instance.new("BillboardGui") espGui.Name = "BillboardGui" espGui.Size = UDim2.new(0, 120, 0, 40) espGui.StudsOffset = Vector3.new(0, 4, 0) espGui.AlwaysOnTop = true espGui.Adornee = egg espGui.Parent = egg
+
+local label = Instance.new("TextLabel")
+label.Name = "PetLabel"
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.fromRGB(255, 255, 0)
+label.TextStrokeTransparency = 0
+label.Font = Enum.Font.GothamBold
+label.TextScaled = true
+label.Text = "?"
+label.Parent = espGui
+
+local highlight = Instance.new("Highlight")
+highlight.Name = "ESPHighlight"
+highlight.FillColor = Color3.fromRGB(255, 200, 0)
+highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+highlight.FillTransparency = 0.7
+highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+highlight.Adornee = egg
+highlight.Parent = egg
+
+end
+
+local function applyRandomizer(egg, pets) local label = egg:FindFirstChild("BillboardGui") and egg.BillboardGui:FindFirstChild("PetLabel") if label then local chosen = pets[math.random(1, #pets)] label.Text = chosen end end
+
+for _, egg in pairs(eggsFolder:GetChildren()) do local eggName = egg.Name local pets = petEggMap[eggName] if pets then if not egg:FindFirstChild("BillboardGui") then createESP(egg) end
+
+local clickDetector = egg:FindFirstChildOfClass("ClickDetector") or Instance.new("ClickDetector", egg)
+    eggToggles[egg] = false
+
+    clickDetector.MouseClick:Connect(function()
+        eggToggles[egg] = not eggToggles[egg]
+        if eggToggles[egg] then
+            applyRandomizer(egg, pets)
+        else
+            local label = egg.BillboardGui:FindFirstChild("PetLabel")
+            if label then label.Text = "?" end
+        end
+    end)
+end
+
+end
+
+-- UI Setup local screenGui = Instance.new("ScreenGui", playerGui) screenGui.Name = "EggRandomizerUI"
+
+local frame = Instance.new("Frame", screenGui) frame.Size = UDim2.new(0, 260, 0, 180) frame.Position = UDim2.new(0, 20, 0, 100) frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25) frame.BorderSizePixel = 0 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+
+local function makeButton(text, yPos, color, callback) local btn = Instance.new("TextButton", frame) btn.Size = UDim2.new(1, -20, 0, 40) btn.Position = UDim2.new(0, 10, 0, yPos) btn.Text = text btn.Font = Enum.Font.GothamBold btn.TextSize = 16 btn.TextColor3 = Color3.new(1, 1, 1) btn.BackgroundColor3 = color btn.MouseButton1Click:Connect(callback) Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6) end
+
+-- Randomize All Eggs Button makeButton("🎲 Randomize All Eggs", 10, Color3.fromRGB(255, 140, 0), function() for _, egg in pairs(eggsFolder:GetChildren()) do local pets = petEggMap[egg.Name] if pets then applyRandomizer(egg, pets) end end end)
+
+-- Toggle ESP Button makeButton("👁️ Toggle ESP", 60, Color3.fromRGB(85, 150, 255), function() espEnabled = not espEnabled for _, egg in pairs(eggsFolder:GetChildren()) do local highlight = egg:FindFirstChild("ESPHighlight") if highlight then highlight.Enabled = espEnabled end end end)
+
+-- Reset All Labels Button makeButton("🔄 Reset All Eggs", 110, Color3.fromRGB(60, 200, 90), function() for _, egg in pairs(eggsFolder:GetChildren()) do local label = egg:FindFirstChild("BillboardGui") and egg.BillboardGui:FindFirstChild("PetLabel") if label then label.Text = "?" end eggToggles[egg] = false end end)
+
